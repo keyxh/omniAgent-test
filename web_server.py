@@ -11,8 +11,8 @@ import logging
 import sys
 from typing import Dict, Optional
 from pathlib import Path
-from queue import Queue
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, FileResponse
@@ -226,6 +226,46 @@ async def root():
     return {"message": "OmniAgent Web Server", "status": "running"}
 
 
+@app.get("/settings.html")
+async def settings_page():
+    frontend_path = Path(__file__).parent / "frontend" / "settings.html"
+    if frontend_path.exists():
+        return FileResponse(frontend_path)
+    raise HTTPException(status_code=404, detail="页面不存在")
+
+
+@app.get("/workers.html")
+async def workers_page():
+    frontend_path = Path(__file__).parent / "frontend" / "workers.html"
+    if frontend_path.exists():
+        return FileResponse(frontend_path)
+    raise HTTPException(status_code=404, detail="页面不存在")
+
+
+@app.get("/cli-tools.html")
+async def cli_tools_page():
+    frontend_path = Path(__file__).parent / "frontend" / "cli-tools.html"
+    if frontend_path.exists():
+        return FileResponse(frontend_path)
+    raise HTTPException(status_code=404, detail="页面不存在")
+
+
+@app.get("/{page_name}.js")
+async def js_files(page_name: str):
+    frontend_path = Path(__file__).parent / "frontend" / f"{page_name}.js"
+    if frontend_path.exists():
+        return FileResponse(frontend_path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="文件不存在")
+
+
+@app.get("/styles.css")
+async def styles_file():
+    frontend_path = Path(__file__).parent / "frontend" / "styles.css"
+    if frontend_path.exists():
+        return FileResponse(frontend_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="文件不存在")
+
+
 @app.get("/api/health")
 async def health():
     return {
@@ -254,7 +294,7 @@ async def chat(request: ChatRequest):
         try:
             yield f"data: {json.dumps({'type': 'session_id', 'session_id': session_id}, ensure_ascii=False)}\n\n"
             
-            output_queue = Queue()
+            output_queue = asyncio.Queue()
             error_holder = {"error": None}
             full_response = {"text": ""}
             
@@ -276,7 +316,10 @@ async def chat(request: ChatRequest):
                     
                     def custom_print(*args, **kwargs):
                         text = ' '.join(str(arg) for arg in args)
-                        output_queue.put({"type": "content", "content": text + "\n"})
+                        asyncio.run_coroutine_threadsafe(
+                            output_queue.put({"type": "content", "content": text + "\n"}),
+                            asyncio.get_event_loop()
+                        )
                     
                     import builtins
                     builtins.print = custom_print
@@ -289,38 +332,51 @@ async def chat(request: ChatRequest):
                         )
                         
                         full_response["text"] = result
-                        output_queue.put({"type": "content", "content": f"\n\n{result}"})
+                        asyncio.run_coroutine_threadsafe(
+                            output_queue.put({"type": "content", "content": f"\n\n{result}"}),
+                            asyncio.get_event_loop()
+                        )
                         
                     finally:
                         builtins.print = original_print
                     
-                    output_queue.put({"type": "done"})
+                    asyncio.run_coroutine_threadsafe(
+                        output_queue.put({"type": "done"}),
+                        asyncio.get_event_loop()
+                    )
                     
                 except Exception as e:
                     logger.error(f"执行错误: {e}", exc_info=True)
                     error_holder["error"] = str(e)
-                    output_queue.put({"type": "error", "error": str(e)})
-                    output_queue.put({"type": "done"})
+                    asyncio.run_coroutine_threadsafe(
+                        output_queue.put({"type": "error", "error": str(e)}),
+                        asyncio.get_event_loop()
+                    )
+                    asyncio.run_coroutine_threadsafe(
+                        output_queue.put({"type": "done"}),
+                        asyncio.get_event_loop()
+                    )
             
-            thread = Thread(target=run_engine, daemon=True)
-            thread.start()
-            
-            while True:
-                await asyncio.sleep(0.01)
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = loop.run_in_executor(executor, run_engine)
                 
-                while not output_queue.empty():
-                    msg = output_queue.get()
-                    
-                    if msg["type"] == "done":
-                        if full_response["text"]:
-                            database.add_message(session_id, "assistant", full_response["text"])
-                            database.update_conversation(session_id)
-                        return
-                    
-                    yield f"data: {json.dumps(msg, ensure_ascii=False)}\n\n"
-                
-                if not thread.is_alive() and output_queue.empty():
-                    break
+                while True:
+                    try:
+                        msg = await asyncio.wait_for(output_queue.get(), timeout=0.1)
+                        
+                        if msg["type"] == "done":
+                            if full_response["text"]:
+                                database.add_message(session_id, "assistant", full_response["text"])
+                                database.update_conversation(session_id)
+                            return
+                        
+                        yield f"data: {json.dumps(msg, ensure_ascii=False)}\n\n"
+                        
+                    except asyncio.TimeoutError:
+                        if future.done():
+                            break
+                        continue
             
         except Exception as e:
             logger.error(f"流式响应错误: {e}", exc_info=True)
@@ -449,7 +505,20 @@ async def update_conversation(conversation_id: str, title: str):
 @app.get("/api/cli-tools")
 async def get_cli_tools():
     """获取所有 CLI 工具"""
-    return database.get_cli_tools()
+    from engine.registry import get_registry
+    registry = get_registry()
+    tools = []
+    for name in registry.list_tools():
+        tool = registry.get_tool(name)
+        if tool and registry.is_available(name):
+            tools.append({
+                "id": name,
+                "name": name,
+                "description": tool.description,
+                "parameters": tool.parameters,
+                "category": tool.category
+            })
+    return tools
 
 
 @app.post("/api/cli-tools")
@@ -498,10 +567,7 @@ async def delete_cli_tool(tool_id: int):
 async def list_workers(include_disabled: bool = False):
     """获取所有员工列表"""
     workers = workers_manager.list_workers(include_disabled=include_disabled)
-    return {
-        "workers": [w.to_dict() for w in workers],
-        "statistics": workers_manager.get_statistics()
-    }
+    return [w.to_dict() for w in workers]
 
 
 @app.get("/api/workers/current")
@@ -522,29 +588,28 @@ async def get_worker(worker_id: str):
     return worker.to_dict()
 
 
-@app.post("/api/workers")
-async def create_worker(
-    name: str,
-    prompt: str,
-    cli_tools: list = [],
-    model: str = "gpt-4",
-    provider: str = "openai",
+class WorkerCreateRequest(BaseModel):
+    name: str
+    prompt: str
+    cli_tools: list = []
+    model: str = "gpt-4"
+    provider: str = "openai"
     metadata: dict = {}
-):
+
+
+@app.post("/api/workers")
+async def create_worker(request: WorkerCreateRequest):
     """创建新员工"""
     try:
         worker = workers_manager.create_worker(
-            name=name,
-            prompt=prompt,
-            cli_tools=cli_tools,
-            model=model,
-            provider=provider,
-            metadata=metadata
+            name=request.name,
+            prompt=request.prompt,
+            cli_tools=request.cli_tools,
+            model=request.model,
+            provider=request.provider,
+            metadata=request.metadata
         )
-        return {
-            "success": True,
-            "worker": worker.to_dict()
-        }
+        return worker.to_dict()
     except Exception as e:
         logger.error(f"创建员工失败：{e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -695,7 +760,12 @@ async def download_file(filename: str):
 
 frontend_path = Path(__file__).parent / "frontend"
 if frontend_path.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+    assets_path = frontend_path / "assets"
+    if assets_path.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
+    fonts_path = assets_path / "fonts"
+    if fonts_path.exists():
+        app.mount("/assets/fonts", StaticFiles(directory=str(fonts_path)), name="fonts")
 
 
 if __name__ == "__main__":
@@ -704,8 +774,8 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("🚀 OmniAgent Web Server 启动中...")
     print("="*70)
-    print(f"\n📍 访问地址: http://localhost:8080")
-    print(f"⚙️  设置页面: http://localhost:8080/settings.html")
+    print(f"\n📍 访问地址: http://localhost:19901/")
+    print(f"⚙️  设置页面: http://localhost:19901/settings.html")
     print(f"\n💡 提示：首次使用请访问设置页面配置 API Key\n")
     print("="*70 + "\n")
     

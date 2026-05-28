@@ -144,19 +144,77 @@ def _register_builtin_tools():
     from .shell import shell_capability
     from .filesystem import read_file_capability, write_file_capability, edit_file_capability
     from .search import grep_capability, glob_capability
+    from .curl import curl_capability, check_curl_available
     
     registry = get_registry()
     
     registry.register(
+        name="curl",
+        handler=curl_capability,
+        description="Execute HTTP requests using curl. Supports various HTTP methods, headers, data, and timeout configuration.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL to request"
+                },
+                "method": {
+                    "type": "string",
+                    "description": "HTTP method (GET, POST, PUT, DELETE, etc.)",
+                    "default": "GET",
+                    "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+                },
+                "headers": {
+                    "type": "object",
+                    "description": "HTTP headers as key-value pairs",
+                    "additionalProperties": {"type": "string"}
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Request body data (for POST, PUT, etc.)"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "Connection timeout in seconds (default 30, max 300)",
+                    "default": 30
+                },
+                "follow_redirects": {
+                    "type": "boolean",
+                    "description": "Follow HTTP redirects",
+                    "default": True
+                },
+                "verbose": {
+                    "type": "boolean",
+                    "description": "Show verbose output",
+                    "default": False
+                },
+                "output_file": {
+                    "type": "string",
+                    "description": "Save response to file"
+                }
+            },
+            "required": ["url"]
+        },
+        check_fn=check_curl_available,
+        category="web"
+    )
+    
+    registry.register(
         name="shell",
         handler=shell_capability,
-        description="Execute a shell command and return the output",
+        description="Execute a shell command and return the output. Timeout can be configured (default 30s, max 600s).",
         parameters={
             "type": "object",
             "properties": {
                 "command": {
                     "type": "string",
                     "description": "The shell command to execute"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "Timeout in seconds (default 30, max 600)",
+                    "default": 30
                 }
             },
             "required": ["command"]

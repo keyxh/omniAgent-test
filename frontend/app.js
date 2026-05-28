@@ -4,6 +4,7 @@ let chats = [];
 let currentMode = null;
 let streamingMessageEl = null;
 let currentEventSource = null;
+let isStreaming = false;
 
 const API_BASE = '';
 

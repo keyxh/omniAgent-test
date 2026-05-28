@@ -21,6 +21,12 @@ def is_safe_command(command: str) -> Tuple[bool, str]:
 
 def shell_capability(args: Dict, working_dir: Path) -> Dict:
     command = args.get('command', '')
+    timeout = args.get('timeout', 30)
+    
+    if not isinstance(timeout, int) or timeout < 1:
+        timeout = 30
+    elif timeout > 600:
+        timeout = 600
     
     is_safe, reason = is_safe_command(command)
     if not is_safe:
@@ -33,16 +39,17 @@ def shell_capability(args: Dict, working_dir: Path) -> Dict:
             cwd=str(working_dir),
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=timeout,
         )
         
         return {
             "stdout": result.stdout,
             "stderr": result.stderr,
             "returncode": result.returncode,
-            "success": result.returncode == 0
+            "success": result.returncode == 0,
+            "timeout_used": timeout
         }
     except subprocess.TimeoutExpired:
-        return {"error": "命令执行超时（30秒）"}
+        return {"error": f"命令执行超时（{timeout}秒）"}
     except Exception as e:
         return {"error": str(e)}

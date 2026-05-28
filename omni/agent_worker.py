@@ -180,7 +180,6 @@ class WorkerManager:
             worker = AgentWorker.from_dict(worker_data)
             self.workers[worker.id] = worker
         
-        # 加载当前员工
         cursor.execute('SELECT worker_id FROM current_worker WHERE id = 0')
         row = cursor.fetchone()
         if row:
@@ -188,9 +187,14 @@ class WorkerManager:
         
         conn.close()
         
-        # 如果没有主员工，创建默认的
-        if not any(w.is_default for w in self.workers.values()):
+        has_default = any(w.is_default for w in self.workers.values())
+        if not has_default:
             self._create_default_worker()
+        
+        if self.current_worker_id is None:
+            default_worker = next((w for w in self.workers.values() if w.is_default), None)
+            if default_worker:
+                self.current_worker_id = default_worker.id
         
         logger.info(f"加载了 {len(self.workers)} 个员工")
     

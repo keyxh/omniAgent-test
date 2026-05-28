@@ -3,24 +3,114 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>本地工具管理 - OmniAgent</title>
-    <link href="./assets/output.css" rel="stylesheet"/>
-    <link href="./assets/inter.css" rel="stylesheet"/>
-    <link href="./assets/material-symbols.css" rel="stylesheet"/>
+    <title>OmniAgent - 工具管理</title>
+    <script src="./assets/tailwind-cdn.js"></script>
+    <link href="./assets/material-symbols-outlined.css" rel="stylesheet"/>
+    <link href="./assets/inter-google.css" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "background": "#f7f9fb",
+                        "primary-fixed-dim": "#bec6e0",
+                        "primary-fixed": "#dae2fd",
+                        "on-surface-variant": "#45464d",
+                        "on-secondary-fixed-variant": "#005049",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-surface": "#2d3133",
+                        "primary-container": "#131b2e",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "on-secondary-container": "#006f66",
+                        "secondary": "#006a61",
+                        "surface-bright": "#f7f9fb",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#bec6e0",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#86f2e4",
+                        "on-secondary-fixed": "#00201d",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "on-surface": "#191c1e",
+                        "surface-dim": "#d8dadc",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#c4e7ff",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-tertiary-container": "#008ebf",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#001e2c",
+                        "tertiary": "#000000",
+                        "on-primary-container": "#7c839b",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#7bd0ff",
+                        "outline": "#76777d",
+                        "on-primary-fixed": "#131b2e",
+                        "surface-tint": "#565e74",
+                        "inverse-surface": "#2d3133",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#89f5e7",
+                        "error-container": "#ffdad6",
+                        "surface": "#f7f9fb",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary": "#000000",
+                        "on-background": "#191c1e",
+                        "surface-container-low": "#f2f4f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-xs": "4px",
+                        "stack-lg": "24px",
+                        "sidebar-width": "260px",
+                        "margin-page": "32px",
+                        "gutter": "24px",
+                        "container-max-width": "1200px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
         .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        
-        body { 
-            background: #f7f9fb;
-            min-height: 100vh;
-        }
-        
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.5);
@@ -30,141 +120,334 @@
         }
         .modal-overlay.hidden { display: none; }
         .hidden { display: none !important; }
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .category-system { background: #fee2e2; color: #dc2626; }
+        .category-filesystem { background: #dbeafe; color: #2563eb; }
+        .category-search { background: #fef3c7; color: #d97706; }
+        .category-web { background: #d1fae5; color: #059669; }
+        .category-other { background: #f3f4f6; color: #6b7280; }
     </style>
 </head>
-<body class="font-sans text-gray-800 antialiased min-h-screen flex flex-col overflow-hidden">
-
-<!-- TopAppBar -->
-<header class="h-16 flex justify-between items-center px-8 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-10 sticky top-0 shrink-0">
-    <div class="flex items-center gap-4">
-        <a href="./index.html" class="flex items-center text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors gap-1.5">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            返回
-        </a>
-    </div>
-    <div class="flex items-center gap-2">
-        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
-            <span class="material-symbols-outlined">notifications</span>
-        </button>
-        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
-            <span class="material-symbols-outlined">help_outline</span>
-        </button>
-        <div class="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex items-center justify-center text-gray-600 font-medium text-sm">
-            U
+<body class="antialiased min-h-screen flex overflow-hidden">
+<div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <header class="h-16 flex justify-between items-center px-margin-page w-full bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 z-10 sticky top-0 shrink-0">
+        <div class="flex items-center gap-4">
+            <button class="md:hidden text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors active:scale-95">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <a class="flex items-center text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors gap-1" href="./index.html">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                返回
+            </a>
         </div>
-    </div>
-</header>
-
-<!-- Page Content -->
-<main class="flex-1 overflow-y-auto bg-white p-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-purple-600 text-[32px]">extension</span>
-                <h2 class="text-3xl font-semibold text-gray-900">本地工具管理</h2>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="refreshTools()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-                    <span class="material-symbols-outlined">refresh</span>
-                </button>
-                <button onclick="openAddToolModal()" class="bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm px-6 py-2.5 rounded-full shadow-sm transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[18px]">add</span>
-                    添加工具
-                </button>
-            </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="mb-8">
-            <div class="relative">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                <input id="searchInput" type="text" placeholder="搜索工具名称、描述..."
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
-                    oninput="searchTools()"/>
-            </div>
-        </div>
-
-        <!-- Tools List -->
-        <div id="toolsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden text-center py-20">
-            <span class="material-symbols-outlined text-7xl text-gray-300 mb-4">extension_off</span>
-            <p class="text-gray-500 text-lg mb-4">暂无本地工具</p>
-            <button onclick="openAddToolModal()" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                + 添加第一个工具
+        <div class="flex items-center gap-4">
+            <button onclick="loadTools()" class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+                <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button onclick="openAddToolModal()" class="bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full shadow-sm transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                添加工具
             </button>
         </div>
-    </div>
-</main>
+    </header>
 
-<!-- Add/Edit Tool Modal -->
-<div id="toolModal" class="modal-overlay hidden">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800">添加本地工具</h2>
-            <button onclick="closeToolModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                <span class="material-symbols-outlined text-2xl">close</span>
-            </button>
-        </div>
-        <form id="toolForm" onsubmit="saveTool(event)">
-            <input type="hidden" id="toolId"/>
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        工具名称 <span class="text-red-500">*</span>
-                    </label>
-                    <input id="toolName" type="text" required
-                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
-                        placeholder="例如: 网页浏览器"/>
+    <main class="flex-1 overflow-y-auto bg-surface-container-lowest p-margin-page">
+        <div class="max-w-container-max-width mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-stack-lg">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-[32px]">construction</span>
+                    <h2 class="text-headline-lg font-headline-lg text-primary">工具管理</h2>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        CLI 路径 <span class="text-gray-400 font-normal">(可选)</span>
-                    </label>
-                    <input id="toolPath" type="text"
-                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-mono"
-                        placeholder="例如: /usr/bin/playwright 或留空"/>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        工具说明 <span class="text-red-500">*</span>
-                    </label>
-                    
-                    <div class="mb-3">
-                        <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-100 hover:border-gray-400 transition-colors cursor-pointer">
-                            <span class="material-symbols-outlined text-gray-500">upload_file</span>
-                            <span class="text-sm text-gray-600">上传 .md 或 .txt 文件</span>
-                            <input id="toolDocFile" type="file" accept=".md,.txt" class="hidden" onchange="handleFileUpload(event)"/>
-                        </label>
-                        <p class="text-xs text-gray-500 mt-1">或手动输入工具的用法说明和功能描述</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-stack-lg">
+                <div class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[24px]">construction</span>
                     </div>
-                    
-                    <textarea id="toolDescription" rows="6" required
-                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm resize-none"
-                        placeholder="请输入工具的用法说明和功能描述...&#10;&#10;例如：&#10;用法：playwright open https://example.com&#10;&#10;功能：这是一个浏览器自动化工具..."></textarea>
+                    <div>
+                        <div id="statTotal" class="text-headline-md font-headline-md text-on-surface">0</div>
+                        <div class="text-label-sm font-label-sm text-on-surface-variant">总工具数</div>
+                    </div>
                 </div>
-                
-                <div class="flex gap-4 pt-6 border-t border-gray-200 mt-6">
-                    <button type="button" onclick="closeToolModal()"
-                        class="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm">
-                        取消
+                <div class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-error-container/20 flex items-center justify-center text-error">
+                        <span class="material-symbols-outlined text-[24px]">terminal</span>
+                    </div>
+                    <div>
+                        <div id="statSystem" class="text-headline-md font-headline-md text-on-surface">0</div>
+                        <div class="text-label-sm font-label-sm text-on-surface-variant">系统工具</div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[24px]">folder</span>
+                    </div>
+                    <div>
+                        <div id="statFilesystem" class="text-headline-md font-headline-md text-on-surface">0</div>
+                        <div class="text-label-sm font-label-sm text-on-surface-variant">文件工具</div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[24px]">search</span>
+                    </div>
+                    <div>
+                        <div id="statSearch" class="text-headline-md font-headline-md text-on-surface">0</div>
+                        <div class="text-label-sm font-label-sm text-on-surface-variant">搜索工具</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-surface-container-low border-b border-outline-variant/30">
+                                <th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">工具名称</th>
+                                <th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">描述</th>
+                                <th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">类别</th>
+                                <th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">参数</th>
+                                <th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="toolsTable" class="divide-y divide-outline-variant/20">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-stack-lg flex justify-between items-center text-label-sm text-on-surface-variant/60">
+                <p id="paginationInfo">显示 0-0 / 共 0 条工具数据</p>
+                <div class="flex gap-2">
+                    <button class="p-1.5 border border-outline-variant/30 rounded-lg hover:bg-surface-container-low disabled:opacity-30" disabled>
+                        <span class="material-symbols-outlined">chevron_left</span>
                     </button>
-                    <button type="submit"
-                        class="flex-1 px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all font-medium text-sm shadow-sm">
-                        确定添加
+                    <button class="p-1.5 border border-outline-variant/30 rounded-lg hover:bg-surface-container-low disabled:opacity-30" disabled>
+                        <span class="material-symbols-outlined">chevron_right</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="addToolModal" class="modal-overlay hidden">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-outline-variant/30">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-headline-md font-headline-md text-on-surface">添加工具</h3>
+            <button onclick="closeAddToolModal()" class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-full">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="addToolForm" class="space-y-4">
+            <div>
+                <label class="block text-label-md font-label-md text-on-surface-variant mb-1">工具名称</label>
+                <input type="text" id="toolName" required class="w-full px-4 py-2 border border-outline-variant/30 rounded-lg bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="例如：curl">
+            </div>
+            <div>
+                <label class="block text-label-md font-label-md text-on-surface-variant mb-1">描述</label>
+                <textarea id="toolDescription" rows="2" required class="w-full px-4 py-2 border border-outline-variant/30 rounded-lg bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="工具的功能描述..."></textarea>
+            </div>
+            <div>
+                <label class="block text-label-md font-label-md text-on-surface-variant mb-1">类别</label>
+                <select id="toolCategory" class="w-full px-4 py-2 border border-outline-variant/30 rounded-lg bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-secondary focus:border-secondary">
+                    <option value="system">系统工具</option>
+                    <option value="filesystem">文件工具</option>
+                    <option value="search">搜索工具</option>
+                    <option value="web">网络工具</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-label-md font-label-md text-on-surface-variant mb-1">执行命令</label>
+                <input type="text" id="toolCommand" class="w-full px-4 py-2 border border-outline-variant/30 rounded-lg bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="例如：curl.exe">
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeAddToolModal()" class="flex-1 px-4 py-2 border border-outline-variant/30 rounded-lg text-on-surface-variant hover:bg-surface-container-low">取消</button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90">创建</button>
             </div>
         </form>
     </div>
 </div>
 
-<script src="./cli-tools.js"></script>
+<script>
+const API_BASE = '';
+let allTools = [];
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadTools();
+});
+
+async function loadTools() {
+    try {
+        const response = await fetch(`${API_BASE}/api/cli-tools`);
+        if (response.ok) {
+            allTools = await response.json();
+            renderTools();
+            updateStats();
+        }
+    } catch (err) {
+        console.error('加载工具失败:', err);
+    }
+}
+
+function updateStats() {
+    const total = allTools.length;
+    const systemCount = allTools.filter(t => t.category === 'system').length;
+    const filesystemCount = allTools.filter(t => t.category === 'filesystem').length;
+    const searchCount = allTools.filter(t => t.category === 'search').length;
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statSystem').textContent = systemCount;
+    document.getElementById('statFilesystem').textContent = filesystemCount;
+    document.getElementById('statSearch').textContent = searchCount;
+    
+    document.getElementById('paginationInfo').textContent = `显示 1-${total} / 共 ${total} 条工具数据`;
+}
+
+function getCategoryBadgeClass(category) {
+    const classes = {
+        'system': 'category-system',
+        'filesystem': 'category-filesystem',
+        'search': 'category-search',
+        'web': 'category-web',
+        'other': 'category-other'
+    };
+    return classes[category] || 'category-other';
+}
+
+function renderTools() {
+    const tbody = document.getElementById('toolsTable');
+    tbody.innerHTML = '';
+    
+    if (allTools.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">暂无工具数据</td></tr>';
+        return;
+    }
+    
+    allTools.forEach(tool => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-surface-container-low/30 transition-colors group';
+        
+        const categoryBadgeClass = getCategoryBadgeClass(tool.category);
+        const categoryText = tool.category || 'other';
+        
+        const paramsCount = tool.parameters?.properties ? Object.keys(tool.parameters.properties).length : 0;
+        const requiredParams = tool.parameters?.required || [];
+        
+        tr.innerHTML = `
+            <td class="px-6 py-5">
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-body-md font-semibold text-on-surface">${escapeHtml(tool.name)}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-label-sm text-on-surface-variant/70">
+                        <span class="material-symbols-outlined text-[14px]">fingerprint</span>
+                        <span>ID: ${escapeHtml(tool.id || tool.name)}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-5">
+                <p class="text-body-md text-on-surface-variant line-clamp-2 max-w-md">${escapeHtml(tool.description || '无描述')}</p>
+            </td>
+            <td class="px-6 py-5">
+                <span class="category-badge ${categoryBadgeClass}">${escapeHtml(categoryText)}</span>
+            </td>
+            <td class="px-6 py-5">
+                <div class="text-body-md text-on-surface-variant">
+                    <span class="font-semibold">${paramsCount}</span> 个参数
+                    ${requiredParams.length > 0 ? `<span class="text-label-sm text-on-surface-variant/70 ml-1">(${requiredParams.length} 必填)</span>` : ''}
+                </div>
+            </td>
+            <td class="px-6 py-5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                    <button onclick="editTool('${tool.id || tool.name}')" class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary-container/20 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                    </button>
+                    <button onclick="deleteTool('${tool.id || tool.name}')" class="p-2 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function openAddToolModal() {
+    document.getElementById('addToolModal').classList.remove('hidden');
+    document.getElementById('addToolForm').reset();
+}
+
+function closeAddToolModal() {
+    document.getElementById('addToolModal').classList.add('hidden');
+}
+
+document.getElementById('addToolForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('toolName').value.trim();
+    const description = document.getElementById('toolDescription').value.trim();
+    const category = document.getElementById('toolCategory').value;
+    const command = document.getElementById('toolCommand').value.trim();
+    
+    if (!name || !description) {
+        alert('请填写必填字段');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/cli-tools`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description, category, command })
+        });
+        
+        if (response.ok) {
+            closeAddToolModal();
+            loadTools();
+            alert('工具创建成功');
+        } else {
+            const error = await response.json();
+            alert(error.detail || '创建失败');
+        }
+    } catch (err) {
+        alert('创建失败: ' + err.message);
+    }
+});
+
+async function deleteTool(toolId) {
+    if (!confirm('确定要删除这个工具吗？')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/cli-tools/${toolId}`, { method: 'DELETE' });
+        if (response.ok) {
+            loadTools();
+            alert('工具已删除');
+        }
+    } catch (err) {
+        alert('删除失败: ' + err.message);
+    }
+}
+
+function editTool(toolId) {
+    alert('编辑功能开发中...');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
 </body>
 </html>

@@ -64,6 +64,20 @@ class OmniEngine(LifecycleManager):
         self.working_dir = working_dir or Path.cwd()
         self.quiet = quiet
         
+        self.last_prompt_tokens: int = 0
+        self.last_completion_tokens: int = 0
+        self.last_total_tokens: int = 0
+        self.threshold_tokens: int = 0
+        self.context_length: int = 0
+        self.compression_count: int = 0
+        self.threshold_percent: float = 0.75
+        self.protect_first_n: int = 3
+        self.protect_last_n: int = 6
+        
+        self.session_start_time: Optional[datetime] = None
+        self.session_end_time: Optional[datetime] = None
+        self.is_active: bool = False
+        
         self.worker_manager = WorkerManager()
         
         if worker_id:
@@ -221,103 +235,105 @@ class OmniEngine(LifecycleManager):
         capabilities: Optional[List[Dict]] = None,
         context: Optional[Dict] = None,
     ) -> str:
-        self.on_session_start(self.worker_id, self.worker_name)
-        
-        self._reset()
-        
-        system_prompt = self.brain.generate(
-            capabilities=capabilities or [],
-            context=context.get('description') if context else None
-        )
-        
-        self.messages.append({
-            "role": "user",
-            "content": task
-        })
-        
-        if self.persistent_memory:
-            self.persistent_memory.add_message(
-                self.session_id,
-                "user",
-                task,
-                tokens=self.persistent_memory.estimate_tokens(task)
+        try:
+            self.on_session_start(self.worker_id, self.worker_name)
+            
+            self._reset()
+            
+            system_prompt = self.brain.generate(
+                capabilities=capabilities or [],
+                context=context.get('description') if context else None
             )
-        
-        if not self.quiet:
-            print(f"\n🚀 Omni Engine 启动")
-            print(f"📋 任务: {task[:100]}...")
-            print(f"🔧 能力: {len(capabilities or [])} 个")
-            print(f"🆔 会话: {self.session_id[:8]}...")
-            print(f"👤 员工: {self.worker_name} ({self.worker_id})\n")
-        
-        while self.iteration < self.max_iterations:
-            self.iteration += 1
             
-            self.visualizer.show_iteration(self.iteration, self.max_iterations)
+            self.messages.append({
+                "role": "user",
+                "content": task
+            })
             
-            try:
-                if self.should_compress():
-                    self.messages = self.compress(self.messages)
-                
-                response = self._call_model(
-                    system_prompt=system_prompt,
-                    messages=self.messages,
-                    capabilities=capabilities,
+            if self.persistent_memory:
+                self.persistent_memory.add_message(
+                    self.session_id,
+                    "user",
+                    task,
+                    tokens=self.persistent_memory.estimate_tokens(task)
                 )
+            
+            if not self.quiet:
+                print(f"\n🚀 Omni Engine 启动")
+                print(f"📋 任务: {task[:100]}...")
+                print(f"🔧 能力: {len(capabilities or [])} 个")
+                print(f"🆔 会话: {self.session_id[:8]}...")
+                print(f"👤 员工: {self.worker_name} ({self.worker_id})\n")
+            
+            while self.iteration < self.max_iterations:
+                self.iteration += 1
                 
-                if 'usage' in response:
-                    self.update_from_response(response['usage'])
+                self.visualizer.show_iteration(self.iteration, self.max_iterations)
                 
-                if response.get('tool_calls'):
-                    self._handle_capability_calls(response)
-                    continue
-                else:
-                    final_response = response.get('content', '')
-                    self.messages.append({
-                        "role": "assistant",
-                        "content": final_response
-                    })
+                try:
+                    if self.should_compress():
+                        self.messages = self.compress(self.messages)
                     
-                    if self.persistent_memory:
-                        self.persistent_memory.add_message(
-                            self.session_id,
-                            "assistant",
-                            final_response,
-                            tokens=self.persistent_memory.estimate_tokens(final_response)
-                        )
+                    response = self._call_model(
+                        system_prompt=system_prompt,
+                        messages=self.messages,
+                        capabilities=capabilities,
+                    )
                     
-                    self.on_task_complete(self.task_id, final_response)
+                    if 'usage' in response:
+                        self.update_from_response(response['usage'])
                     
-                    if not self.quiet:
-                        elapsed = time.time() - self.start_time
-                        self.visualizer.show_summary(
-                            iterations=self.iteration,
-                            elapsed_time=elapsed,
-                            tool_calls=self.tool_executor.get_stats()["tool_calls"]
-                        )
-                        print(f"\n💰 成本: ${self.total_cost:.4f}")
-                        print(f"📊 Tokens: {self.last_total_tokens}")
+                    if response.get('tool_calls'):
+                        self._handle_capability_calls(response)
+                        continue
+                    else:
+                        final_response = response.get('content', '')
+                        self.messages.append({
+                            "role": "assistant",
+                            "content": final_response
+                        })
+                        
+                        if self.persistent_memory:
+                            self.persistent_memory.add_message(
+                                self.session_id,
+                                "assistant",
+                                final_response,
+                                tokens=self.persistent_memory.estimate_tokens(final_response)
+                            )
+                        
+                        self.on_task_complete(self.task_id, final_response)
+                        
+                        if not self.quiet:
+                            elapsed = time.time() - self.start_time
+                            self.visualizer.show_summary(
+                                iterations=self.iteration,
+                                elapsed_time=elapsed,
+                                tool_calls=self.tool_executor.get_stats()["tool_calls"]
+                            )
+                            print(f"\n💰 成本: ${self.total_cost:.4f}")
+                            print(f"📊 Tokens: {self.last_total_tokens}")
+                        
+                        return final_response
+                        
+                except Exception as e:
+                    logger.error(f"执行错误: {e}", exc_info=True)
                     
-                    return final_response
-                    
-            except Exception as e:
-                logger.error(f"执行错误: {e}", exc_info=True)
-                
-                if self.recovery:
-                    self.visualizer.show_error(str(e), recoverable=True)
-                    
-                    self.messages.append({
-                        "role": "user",
-                        "content": f"上一步出错: {str(e)}. 请尝试其他方法。"
-                    })
-                    continue
-                else:
-                    self.visualizer.show_error(str(e), recoverable=False)
-                    self.on_session_end()
-                    raise
-        
-        self.on_session_end()
-        return "达到最大迭代次数,任务未完成。"
+                    if self.recovery:
+                        self.visualizer.show_error(str(e), recoverable=True)
+                        
+                        self.messages.append({
+                            "role": "user",
+                            "content": f"上一步出错: {str(e)}. 请尝试其他方法。"
+                        })
+                        continue
+                    else:
+                        self.visualizer.show_error(str(e), recoverable=False)
+                        raise
+            
+            return "达到最大迭代次数,任务未完成。"
+            
+        finally:
+            self.on_session_end()
     
     def delegate_to_worker(self, worker_id: str, task: str, capabilities: Optional[List[Dict]] = None) -> str:
         """
@@ -354,13 +370,51 @@ class OmniEngine(LifecycleManager):
         
         self.session_pool.assign_task(str(uuid.uuid4()), worker_id)
         
-        result = sub_engine.execute(task, capabilities)
+        try:
+            result = sub_engine.execute(task, capabilities)
+            self.session_pool.complete_task(str(uuid.uuid4()), result)
+            return result
+        finally:
+            sub_engine.on_session_end()
+    
+    def delegate_to_workers_parallel(
+        self,
+        worker_tasks: List[Dict[str, str]],
+        capabilities: Optional[List[Dict]] = None
+    ) -> Dict[str, str]:
+        """
+        并行委派任务给多个员工
         
-        self.session_pool.complete_task(str(uuid.uuid4()), result)
+        Args:
+            worker_tasks: [{"worker_id": "xxx", "task": "xxx"}, ...]
+            capabilities: 可用能力
         
-        sub_engine.on_session_end()
+        Returns:
+            {"worker_id": "result", ...}
+        """
+        import concurrent.futures
         
-        return result
+        results = {}
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(worker_tasks)) as executor:
+            futures = {}
+            for wt in worker_tasks:
+                future = executor.submit(
+                    self.delegate_to_worker,
+                    wt["worker_id"],
+                    wt["task"],
+                    capabilities
+                )
+                futures[future] = wt["worker_id"]
+            
+            for future in concurrent.futures.as_completed(futures):
+                worker_id = futures[future]
+                try:
+                    results[worker_id] = future.result()
+                except Exception as e:
+                    results[worker_id] = f"错误: {str(e)}"
+        
+        return results
     
     def _call_model(
         self,
@@ -492,7 +546,7 @@ class OmniEngine(LifecycleManager):
         
         if self.memory:
             status = self.memory.get_status(self.messages)
-            tokens = status.get("tokens", 0)
+            tokens = status.get("current_tokens", 0)
             max_tokens = self.memory.max_tokens
             info["memory"] = {
                 "current_tokens": tokens,
@@ -503,7 +557,7 @@ class OmniEngine(LifecycleManager):
         if self.persistent_memory:
             info["persistent_memory"] = {
                 "enabled": True,
-                "entries": len(self.persistent_memory.memory_store) if hasattr(self.persistent_memory, 'memory_store') else 0,
+                "db_path": str(self.persistent_memory.db_path),
             }
         
         if self.context_compressor:
