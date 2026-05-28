@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>本地工具管理 - OmniAgent</title>
+    <link href="./assets/output.css" rel="stylesheet"/>
+    <link href="./assets/inter.css" rel="stylesheet"/>
+    <link href="./assets/material-symbols.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        
+        body { 
+            background: #f7f9fb;
+            min-height: 100vh;
+        }
+        
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.hidden { display: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="font-sans text-gray-800 antialiased min-h-screen flex flex-col overflow-hidden">
+
+<!-- TopAppBar -->
+<header class="h-16 flex justify-between items-center px-8 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-10 sticky top-0 shrink-0">
+    <div class="flex items-center gap-4">
+        <a href="./index.html" class="flex items-center text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            返回
+        </a>
+    </div>
+    <div class="flex items-center gap-2">
+        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
+            <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
+            <span class="material-symbols-outlined">help_outline</span>
+        </button>
+        <div class="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300 flex items-center justify-center text-gray-600 font-medium text-sm">
+            U
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<main class="flex-1 overflow-y-auto bg-white p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-purple-600 text-[32px]">extension</span>
+                <h2 class="text-3xl font-semibold text-gray-900">本地工具管理</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="refreshTools()" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
+                <button onclick="openAddToolModal()" class="bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm px-6 py-2.5 rounded-full shadow-sm transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    添加工具
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-8">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <input id="searchInput" type="text" placeholder="搜索工具名称、描述..."
+                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
+                    oninput="searchTools()"/>
+            </div>
+        </div>
+
+        <!-- Tools List -->
+        <div id="toolsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <span class="material-symbols-outlined text-7xl text-gray-300 mb-4">extension_off</span>
+            <p class="text-gray-500 text-lg mb-4">暂无本地工具</p>
+            <button onclick="openAddToolModal()" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                + 添加第一个工具
+            </button>
+        </div>
+    </div>
+</main>
+
+<!-- Add/Edit Tool Modal -->
+<div id="toolModal" class="modal-overlay hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800">添加本地工具</h2>
+            <button onclick="closeToolModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+        <form id="toolForm" onsubmit="saveTool(event)">
+            <input type="hidden" id="toolId"/>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        工具名称 <span class="text-red-500">*</span>
+                    </label>
+                    <input id="toolName" type="text" required
+                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
+                        placeholder="例如: 网页浏览器"/>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        CLI 路径 <span class="text-gray-400 font-normal">(可选)</span>
+                    </label>
+                    <input id="toolPath" type="text"
+                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-mono"
+                        placeholder="例如: /usr/bin/playwright 或留空"/>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        工具说明 <span class="text-red-500">*</span>
+                    </label>
+                    
+                    <div class="mb-3">
+                        <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-100 hover:border-gray-400 transition-colors cursor-pointer">
+                            <span class="material-symbols-outlined text-gray-500">upload_file</span>
+                            <span class="text-sm text-gray-600">上传 .md 或 .txt 文件</span>
+                            <input id="toolDocFile" type="file" accept=".md,.txt" class="hidden" onchange="handleFileUpload(event)"/>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">或手动输入工具的用法说明和功能描述</p>
+                    </div>
+                    
+                    <textarea id="toolDescription" rows="6" required
+                        class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm resize-none"
+                        placeholder="请输入工具的用法说明和功能描述...&#10;&#10;例如：&#10;用法：playwright open https://example.com&#10;&#10;功能：这是一个浏览器自动化工具..."></textarea>
+                </div>
+                
+                <div class="flex gap-4 pt-6 border-t border-gray-200 mt-6">
+                    <button type="button" onclick="closeToolModal()"
+                        class="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all font-medium text-sm shadow-sm">
+                        确定添加
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="./cli-tools.js"></script>
+
+</body>
+</html>

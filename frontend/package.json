@@ -1,0 +1,1 @@
+{"name": "frontend", "version": "1.0.0", "main": "app.js", "scripts": {"build": "npx tailwindcss -i ./styles.css -o ./assets/output.css", "watch": "npx tailwindcss -i ./styles.css -o ./assets/output.css --watch"}, "keywords": [], "author": "", "license": "ISC", "description": "", "devDependencies": {"tailwindcss": "^3.4.0"}}

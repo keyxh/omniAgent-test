@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>设置 - OmniAgent</title>
+    <link href="./assets/output.css" rel="stylesheet"/>
+    <link href="./assets/inter.css" rel="stylesheet"/>
+    <link href="./assets/material-symbols.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .api-card {
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .api-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-color: #d1d5db;
+        }
+        
+        .api-card.default {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .input-field {
+            transition: all 0.2s ease;
+        }
+        
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.hidden { display: none; }
+        .hidden { display: none !important; }
+        
+        .badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .provider-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800">
+
+<div class="min-h-screen py-8">
+    <!-- 顶部导航栏 -->
+    <div class="max-w-6xl mx-auto px-6 mb-8">
+        <div class="glass-card rounded-2xl p-6">
+            <!-- 返回按钮 -->
+            <div class="mb-4">
+                <a href="./index.html" class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    <span class="text-sm font-medium">返回</span>
+                </a>
+            </div>
+            
+            <!-- 标题和操作 -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-3xl text-gray-600">settings</span>
+                    <h1 class="text-3xl font-bold text-gray-800">API 配置管理</h1>
+                </div>
+                <button onclick="openAddApiModal()" class="px-6 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all font-medium text-sm flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined">add</span>
+                    添加 API
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 列表 -->
+    <main class="max-w-6xl mx-auto px-6">
+        <div id="apisList" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        </div>
+        
+        <!-- 空状态 -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <div class="glass-card rounded-2xl p-12 inline-block">
+                <span class="material-symbols-outlined text-7xl text-gray-300 mb-4">cloud_off</span>
+                <p class="text-gray-500 text-lg mb-4">暂无 API 配置</p>
+                <button onclick="openAddApiModal()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    + 添加第一个 API 配置
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 添加/编辑 API 弹窗 -->
+<div id="apiModal" class="modal-overlay hidden">
+    <div class="glass-card rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800">添加 API 配置</h2>
+            <button onclick="closeApiModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+        <form id="apiForm" onsubmit="saveApi(event)">
+            <input type="hidden" id="apiId"/>
+            <div class="space-y-5">
+                <!-- API 名称 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        配置名称 <span class="text-red-500">*</span>
+                    </label>
+                    <input id="apiName" type="text" required
+                        class="input-field w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
+                        placeholder="例如: Qwen 本地模型"/>
+                </div>
+                
+                <!-- 提供商 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        提供商 <span class="text-red-500">*</span>
+                    </label>
+                    <select id="apiProvider" required
+                        class="input-field w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="azure">Azure OpenAI</option>
+                        <option value="local">本地模型</option>
+                    </select>
+                </div>
+                
+                <!-- 模型 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        模型名称 <span class="text-red-500">*</span>
+                    </label>
+                    <input id="apiModel" type="text" required
+                        class="input-field w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
+                        placeholder="例如: Qwen3.6-35B-A3B"/>
+                </div>
+                
+                <!-- API Key -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        API Key <span class="text-gray-400 font-normal">(本地模型可留空)</span>
+                    </label>
+                    <div class="relative">
+                        <input id="apiKey" type="password"
+                            class="input-field w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm pr-12"
+                            placeholder="sk-... 或留空"/>
+                        <button onclick="toggleApiKeyVisibility()" type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors">
+                            <span id="eyeIcon" class="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Base URL -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Base URL <span class="text-gray-400 font-normal">(可选)</span>
+                    </label>
+                    <input id="apiBaseUrl" type="text"
+                        class="input-field w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm"
+                        placeholder="https://api.openai.com/v1"/>
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeApiModal()"
+                        class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold text-sm">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-semibold text-sm shadow-lg">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="./settings.js?v=2"></script>
+</body>
+</html>

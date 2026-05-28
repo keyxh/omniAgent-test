@@ -1,0 +1,14 @@
+{
+  "apis": [
+    {
+      "id": "your-api-id",
+      "name": "Your API Name",
+      "provider": "openai",
+      "model": "your-model-name",
+      "base_url": "https://api.openai.com/v1",
+      "api_key": "your-api-key-here"
+    }
+  ],
+  "default_api_id": "your-api-id",
+  "max_iterations": 50
+}
