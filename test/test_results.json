@@ -1,0 +1,162 @@
+{
+  "timestamp": "2026-05-29T08:15:59.653791",
+  "summary": {
+    "total": 25,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "pass_rate": 100.0
+  },
+  "results": [
+    {
+      "name": "API健康检查",
+      "status": "PASS",
+      "details": "状态: ok, 版本: 1.0.0",
+      "timestamp": "2026-05-29T08:15:28.683788"
+    },
+    {
+      "name": "对话列表API",
+      "status": "PASS",
+      "details": "共 0 个对话",
+      "timestamp": "2026-05-29T08:15:30.702247"
+    },
+    {
+      "name": "获取员工列表",
+      "status": "PASS",
+      "details": "共 1 个员工",
+      "timestamp": "2026-05-29T08:15:32.747443"
+    },
+    {
+      "name": "获取工具列表",
+      "status": "PASS",
+      "details": "共 7 个工具, 分类: {'web': 1, 'system': 1, 'filesystem': 3, 'search': 2}",
+      "timestamp": "2026-05-29T08:15:34.801531"
+    },
+    {
+      "name": "curl工具注册验证",
+      "status": "PASS",
+      "details": "类别: web",
+      "timestamp": "2026-05-29T08:15:34.801531"
+    },
+    {
+      "name": "shell工具注册验证",
+      "status": "PASS",
+      "details": "类别: system",
+      "timestamp": "2026-05-29T08:15:34.801531"
+    },
+    {
+      "name": "创建有效员工",
+      "status": "PASS",
+      "details": "ID: acdee3e3-0de4-4ecd-afcc-21e022acb31a, 名称: 代码审查员",
+      "timestamp": "2026-05-29T08:15:36.848206"
+    },
+    {
+      "name": "创建无名称员工（预期失败）",
+      "status": "PASS",
+      "details": "正确拒绝无效请求",
+      "timestamp": "2026-05-29T08:15:38.903055"
+    },
+    {
+      "name": "创建无提示词员工（预期失败）",
+      "status": "PASS",
+      "details": "正确拒绝无效请求",
+      "timestamp": "2026-05-29T08:15:40.954850"
+    },
+    {
+      "name": "创建空数据员工（预期失败）",
+      "status": "PASS",
+      "details": "正确拒绝空请求",
+      "timestamp": "2026-05-29T08:15:43.003093"
+    },
+    {
+      "name": "获取单个员工详情",
+      "status": "PASS",
+      "details": "名称: 代码审查员, ID: acdee3e3-0de4-4ecd-afcc-21e022acb31a",
+      "timestamp": "2026-05-29T08:15:45.557240"
+    },
+    {
+      "name": "删除员工",
+      "status": "PASS",
+      "details": "成功删除员工 acdee3e3-0de4-4ecd-afcc-21e022acb31a",
+      "timestamp": "2026-05-29T08:15:48.119032"
+    },
+    {
+      "name": "获取员工列表",
+      "status": "PASS",
+      "details": "共 1 个员工",
+      "timestamp": "2026-05-29T08:15:50.681889"
+    },
+    {
+      "name": "前端页面 - 首页",
+      "status": "PASS",
+      "details": "大小: 14335 bytes",
+      "timestamp": "2026-05-29T08:15:53.458167"
+    },
+    {
+      "name": "前端页面 - 员工管理",
+      "status": "PASS",
+      "details": "大小: 23482 bytes",
+      "timestamp": "2026-05-29T08:15:55.531363"
+    },
+    {
+      "name": "前端页面 - 工具管理",
+      "status": "PASS",
+      "details": "大小: 23207 bytes",
+      "timestamp": "2026-05-29T08:15:57.601677"
+    },
+    {
+      "name": "前端页面 - 设置页面",
+      "status": "PASS",
+      "details": "大小: 9638 bytes",
+      "timestamp": "2026-05-29T08:15:59.649807"
+    },
+    {
+      "name": "CDN资源本地化 - Tailwind CSS",
+      "status": "PASS",
+      "details": "存在，大小: 418973 bytes",
+      "timestamp": "2026-05-29T08:15:59.650313"
+    },
+    {
+      "name": "CDN资源本地化 - Material Symbols CSS",
+      "status": "PASS",
+      "details": "存在，大小: 497 bytes",
+      "timestamp": "2026-05-29T08:15:59.650313"
+    },
+    {
+      "name": "CDN资源本地化 - Inter 字体 CSS",
+      "status": "PASS",
+      "details": "存在，大小: 640 bytes",
+      "timestamp": "2026-05-29T08:15:59.650313"
+    },
+    {
+      "name": "CDN资源本地化 - Material Symbols 字体",
+      "status": "PASS",
+      "details": "存在，大小: 957512 bytes",
+      "timestamp": "2026-05-29T08:15:59.651329"
+    },
+    {
+      "name": "CDN资源本地化 - Inter Regular 字体",
+      "status": "PASS",
+      "details": "存在，大小: 324820 bytes",
+      "timestamp": "2026-05-29T08:15:59.651329"
+    },
+    {
+      "name": "CDN资源本地化 - Inter Medium 字体",
+      "status": "PASS",
+      "details": "存在，大小: 325304 bytes",
+      "timestamp": "2026-05-29T08:15:59.651329"
+    },
+    {
+      "name": "CDN资源本地化 - Inter SemiBold 字体",
+      "status": "PASS",
+      "details": "存在，大小: 326048 bytes",
+      "timestamp": "2026-05-29T08:15:59.651329"
+    },
+    {
+      "name": "CDN资源本地化 - Inter Bold 字体",
+      "status": "PASS",
+      "details": "存在，大小: 326468 bytes",
+      "timestamp": "2026-05-29T08:15:59.652490"
+    }
+  ]
+}
